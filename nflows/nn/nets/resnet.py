@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import init
+import numpy as np
 
 import nflows.utils as utils
 
@@ -24,7 +25,7 @@ class ResidualBlock(nn.Module):
         self.use_batch_norm = use_batch_norm
         if use_batch_norm:
             self.batch_norm_layers = nn.ModuleList(
-                [nn.BatchNorm1d(features, eps=1e-3) for _ in range(2)]
+                [nn.BatchNorm1d(features, affine=True) for _ in range(2)]
             )
         if context_features is not None:
             self.context_layer = nn.Linear(context_features, features)
@@ -79,7 +80,7 @@ class ResidualNet(nn.Module):
             [
                 ResidualBlock(
                     features=hidden_features,
-                    context_features=context_features,
+                    context_features=None,
                     activation=activation,
                     dropout_probability=dropout_probability,
                     use_batch_norm=use_batch_norm,
@@ -88,6 +89,9 @@ class ResidualNet(nn.Module):
             ]
         )
         self.final_layer = nn.Linear(hidden_features, out_features)
+        stdv = 0.01 / np.sqrt(hidden_features)
+        init.uniform_(self.final_layer.weight, -stdv, stdv)
+        init.uniform_(self.final_layer.bias, -stdv, stdv)
 
     def forward(self, inputs, context=None):
         if context is None:
@@ -95,7 +99,7 @@ class ResidualNet(nn.Module):
         else:
             temps = self.initial_layer(torch.cat((inputs, context), dim=1))
         for block in self.blocks:
-            temps = block(temps, context=context)
+            temps = block(temps, context=None)
         outputs = self.final_layer(temps)
         return outputs
 

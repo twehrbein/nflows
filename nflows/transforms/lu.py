@@ -53,7 +53,7 @@ class LULinear(Linear):
 
         return lower, upper
 
-    def forward_no_cache(self, inputs):
+    def forward_no_cache(self, inputs, context=None):
         """Cost:
             output = O(D^2N)
             logabsdet = O(D)
@@ -62,12 +62,12 @@ class LULinear(Linear):
             N = num of inputs
         """
         lower, upper = self._create_lower_upper()
-        outputs = F.linear(inputs, upper)
-        outputs = F.linear(outputs, lower, self.bias)
+        outputs = F.linear(inputs, upper.t())
+        outputs = F.linear(outputs, lower.t(), 0*self.bias)
         logabsdet = self.logabsdet() * inputs.new_ones(outputs.shape[0])
         return outputs, logabsdet
 
-    def inverse_no_cache(self, inputs):
+    def inverse_no_cache(self, inputs, context=None):
         """Cost:
             output = O(D^2N)
             logabsdet = O(D)
