@@ -62,8 +62,8 @@ class LULinear(Linear):
             N = num of inputs
         """
         lower, upper = self._create_lower_upper()
-        outputs = F.linear(inputs, upper.t())
-        outputs = F.linear(outputs, lower.t(), 0*self.bias)
+        outputs = F.linear(inputs, upper)
+        outputs = F.linear(outputs, lower, self.bias)
         logabsdet = self.logabsdet() * inputs.new_ones(outputs.shape[0])
         return outputs, logabsdet
 
