@@ -8,7 +8,7 @@ from nflows.distributions.normal import StandardNormal
 from nflows.flows.base import Flow
 from nflows.nn import nets as nets
 from nflows.transforms.base import CompositeTransform
-from nflows.transforms.coupling import AdditiveCouplingTransform
+from nflows.transforms.coupling import AdditiveCouplingTransform, AffineCouplingTransform
 from nflows.transforms.lu import LULinear
 from nflows.transforms.normalization import BatchNorm, ActNorm
 
@@ -29,9 +29,13 @@ class ConditionalGlow(Flow):
         dropout_probability=0.5,
         context_features=None,
         batch_norm_within_layers=True,
+        use_affine_coupling=False,
+        scale_activation="DEFAULT"
     ):
-
-        coupling_constructor = AdditiveCouplingTransform
+        if use_affine_coupling:
+            coupling_constructor = AffineCouplingTransform
+        else:
+            coupling_constructor = AdditiveCouplingTransform  # AffineCouplingTransform  # AdditiveCouplingTransform
 
         mask = torch.ones(features)
         mask[::2] = -1
@@ -53,7 +57,7 @@ class ConditionalGlow(Flow):
             layers.append(ActNorm(features=features))
             layers.append(LULinear(features=features))
             transform = coupling_constructor(
-                mask=mask, transform_net_create_fn=create_resnet
+                mask=mask, transform_net_create_fn=create_resnet, scale_activation=scale_activation
             )
             mask *= -1
             layers.append(transform)
