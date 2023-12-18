@@ -240,7 +240,7 @@ class AffineCouplingTransform(CouplingTransform):
         elif scale_activation == "GENERAL":
             self.scale_activation = self.general_scale_activation
         elif scale_activation == "SOFT-CLAMP":
-            self.scale_activation = self.exp_soft_clamp
+            self.scale_activation = self.exp_soft_clamp_activation
         else:
             raise NotImplementedError
         super().__init__(mask, transform_net_create_fn, unconditional_transform)
