@@ -30,7 +30,8 @@ class ConditionalGlow(Flow):
         context_features=None,
         batch_norm_within_layers=True,
         use_affine_coupling=False,
-        scale_activation="DEFAULT"
+        scale_activation="DEFAULT",
+        clamp=2.0,
     ):
         if use_affine_coupling:
             coupling_constructor = AffineCouplingTransform
@@ -57,7 +58,7 @@ class ConditionalGlow(Flow):
             layers.append(ActNorm(features=features))
             layers.append(LULinear(features=features))
             transform = coupling_constructor(
-                mask=mask, transform_net_create_fn=create_resnet, scale_activation=scale_activation
+                mask=mask, transform_net_create_fn=create_resnet, scale_activation=scale_activation, clamp=clamp
             )
             mask *= -1
             layers.append(transform)

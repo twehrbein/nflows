@@ -219,20 +219,28 @@ class AffineCouplingTransform(CouplingTransform):
     Two options are predefined in the class.
     `DEFAULT_SCALE_ACTIVATION` preserves backwards compatibility but only produces scales <= 1.001.
     `GENERAL_SCALE_ACTIVATION` produces scales <= 3, which is more useful in general applications.
+    `SOFT-CLAMP` soft clamping from https://arxiv.org/pdf/1907.02392.pdf
     """
     def general_scale_activation(self, x):
         return (softplus(x) + 1e-3).clamp(0, 3)
 
     def default_scale_activation(self, x):
         return torch.sigmoid(x + 2) + 1e-3
+
+    def exp_soft_clamp_activation(self, x):
+        return torch.exp(((2 * self.clamp) / torch.pi) * torch.atan(x / self.clamp))
+
     # DEFAULT_SCALE_ACTIVATION = lambda x : torch.sigmoid(x + 2) + 1e-3
     # GENERAL_SCALE_ACTIVATION = lambda x : (softplus(x) + 1e-3).clamp(0, 3)
 
-    def __init__(self, mask, transform_net_create_fn, unconditional_transform=None, scale_activation="DEFAULT"):
+    def __init__(self, mask, transform_net_create_fn, unconditional_transform=None, scale_activation="DEFAULT", clamp=2.0):
+        self.clamp = clamp
         if scale_activation == "DEFAULT":
             self.scale_activation = self.default_scale_activation
         elif scale_activation == "GENERAL":
             self.scale_activation = self.general_scale_activation
+        elif scale_activation == "SOFT-CLAMP":
+            self.scale_activation = self.exp_soft_clamp
         else:
             raise NotImplementedError
         super().__init__(mask, transform_net_create_fn, unconditional_transform)
